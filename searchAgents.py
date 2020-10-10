@@ -340,9 +340,7 @@ class CornersProblem(search.SearchProblem):
                     c3 = True
                 elif (x, y) == self.corners[3]:
                     c4 = True
-                nextState = (nextx, nexty, c1, c2, c3, c4)
-                cost = 1
-                successors.append( ( nextState, action, cost) )
+                successors.append( ( (nextx, nexty, c1, c2, c3, c4), action, 1) )
 
         self._expanded += 1 # DO NOT CHANGE
         return successors

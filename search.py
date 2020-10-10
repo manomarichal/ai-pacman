@@ -102,11 +102,9 @@ def depthFirstSearch(problem):
                 actions.append(node[1])
                 node = map_parent.get(node)
             return actions[::-1]
-        visited.append(node[0])
-        for child in problem.getSuccessors(node[0]): # expand
-            if child[0] in visited:
-                continue
-            else:
+        if not node[0]in visited:
+            visited.append(node[0])
+            for child in problem.getSuccessors(node[0]):  # expand
                 fringe.push(child)
                 map_parent[child] = node
     print("path does not exist")
@@ -122,7 +120,6 @@ def breadthFirstSearch(problem):
 
     for child in problem.getSuccessors(problem.getStartState()):
         fringe.push(child)
-        visited.append(child[0])
     while not fringe.isEmpty():
         node = fringe.pop()
         if problem.isGoalState(node[0]): # goal node found -> find path
@@ -130,14 +127,11 @@ def breadthFirstSearch(problem):
                 actions.append(node[1])
                 node = map_parent.get(node)
             return actions[::-1]
-        for child in problem.getSuccessors(node[0]): # expand
-            if child[0] in visited:
-                continue
-            else:
-                visited.append(child[0])
+        if not node[0] in visited:
+            visited.append(node[0])
+            for child in problem.getSuccessors(node[0]): # expand
                 fringe.push(child)
                 map_parent[child] = node
-
     print("path does not exist")
 
 def uniformCostSearch(problem):
@@ -150,24 +144,20 @@ def uniformCostSearch(problem):
 
     for child in problem.getSuccessors(problem.getStartState()):
         fringe.push(child, child[2])
-        visited.append(child[0])
     while not fringe.isEmpty():
         node = fringe.pop()
-        if problem.isGoalState(node[0]):  # goal node found -> find path
+        if problem.isGoalState(node[0]): # goal node found -> find path
             while node is not None:
                 actions.append(node[1])
                 node = map_parent.get(node)
             return actions[::-1]
-        for child in problem.getSuccessors(node[0]):  # expand
-            if child[0] in visited:
-                continue
-            else:
-                visited.append(child[0])
-                fringe.push(child, child[2])
-                map_parent[child] = node
-
+        if not node[0] in visited:
+            visited.append(node[0])
+            for child in problem.getSuccessors(node[0]): # expand
+                    new_node = (child[0], child[1], node[2] + child[2])
+                    fringe.push(new_node, new_node[2])
+                    map_parent[new_node] = node
     print("path does not exist")
-    util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
