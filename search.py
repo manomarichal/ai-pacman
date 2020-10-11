@@ -120,6 +120,7 @@ def breadthFirstSearch(problem):
 
     for child in problem.getSuccessors(problem.getStartState()):
         fringe.push(child)
+        visited.append(child[0])
     while not fringe.isEmpty():
         node = fringe.pop()
         if problem.isGoalState(node[0]): # goal node found -> find path
@@ -127,9 +128,9 @@ def breadthFirstSearch(problem):
                 actions.append(node[1])
                 node = map_parent.get(node)
             return actions[::-1]
-        if not node[0] in visited:
-            visited.append(node[0])
-            for child in problem.getSuccessors(node[0]): # expand
+        for child in problem.getSuccessors(node[0]): # expand
+            if not child[0] in visited:
+                visited.append(child[0])
                 fringe.push(child)
                 map_parent[child] = node
     print("path does not exist")
