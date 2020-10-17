@@ -269,7 +269,7 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-
+        self.startingGameState = startingGameState
 
     def getStartState(self):
         """
@@ -350,7 +350,6 @@ def cornersHeuristic(state, problem):
     admissible (as well as consistent).
     """
     corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
     x, y, c1, c2, c3, c4 = state
 
     xy1 = (x, y)
@@ -359,7 +358,7 @@ def cornersHeuristic(state, problem):
     for i in range(0, len(corners), 1):
         if not state[i+2]:
             xy2 = corners[i]
-            values.append(max(abs(xy1[0] - xy2[0]), abs(xy1[1] - xy2[1])))
+            values.append(mazeDistance(xy1, xy2, problem.startingGameState))
     if len(values) == 0: return 0
     return max(values)
 
@@ -457,7 +456,7 @@ def foodHeuristic(state, problem):
         for y in range(0, foodGrid.height, 1):
             if foodGrid[x][y]:
                 xy2 = (x, y)
-                val = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+                val = mazeDistance(xy1, xy2, problem.startingGameState)
                 values.append(val)
     if len(values) ==0: return 0
     return max(values)
