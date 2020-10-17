@@ -174,9 +174,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     actions = []
     map_parent = dict()
     fringe = util.PriorityQueue()
-
+    GREEDY = False
     for child in problem.getSuccessors(problem.getStartState()):
-        fringe.push(child, child[2] + heuristic(child[0], problem))
+        if GREEDY:
+            fringe.push(child, heuristic(child[0], problem))
+        else:
+            fringe.push(child, child[2] + heuristic(child[0], problem))
     while not fringe.isEmpty():
         node = fringe.pop()
         if problem.isGoalState(node[0]):  # goal node found -> find path
@@ -188,7 +191,10 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             visited.append(node[0])
             for child in problem.getSuccessors(node[0]):  # expand
                 new_node = (child[0], child[1], node[2] + child[2])
-                fringe.push(new_node, node[2] + child[2] + heuristic(child[0], problem))
+                if GREEDY:
+                    fringe.push(new_node, heuristic(child[0], problem))
+                else:
+                     fringe.push(new_node, node[2] + child[2] + heuristic(child[0], problem))
                 map_parent[new_node] = node
     print("path does not exist")
 

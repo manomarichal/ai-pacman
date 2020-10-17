@@ -355,14 +355,13 @@ def cornersHeuristic(state, problem):
 
     xy1 = (x, y)
     values = []
+
     for i in range(0, len(corners), 1):
         if not state[i+2]:
             xy2 = corners[i]
-            values.append(abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1]))
-    total = 0
-    for value in values:
-        total += value/len(values) # verwijder die len voor 502 nodes
-    return total
+            values.append(max(abs(xy1[0] - xy2[0]), abs(xy1[1] - xy2[1])))
+    if len(values) == 0: return 0
+    return max(values)
 
 
 class AStarCornersAgent(SearchAgent):
@@ -370,6 +369,7 @@ class AStarCornersAgent(SearchAgent):
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
         self.searchType = CornersProblem
+
 
 class FoodSearchProblem:
     """
@@ -385,6 +385,7 @@ class FoodSearchProblem:
         self.startingGameState = startingGameState
         self._expanded = 0 # DO NOT CHANGE
         self.heuristicInfo = {} # A dictionary for the heuristic to store information
+        self.heuristicInfo['start'] = startingGameState.getFood().count()
 
     def getStartState(self):
         return self.start
@@ -450,8 +451,17 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    xy1 = position
+    values = []
+    for x in range(0, foodGrid.width, 1):
+        for y in range(0, foodGrid.height, 1):
+            if foodGrid[x][y]:
+                xy2 = (x, y)
+                val = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+                values.append(val)
+    if len(values) ==0: return 0
+    return max(values)
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -480,6 +490,8 @@ class ClosestDotSearchAgent(SearchAgent):
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
+
+
 
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
