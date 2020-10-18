@@ -350,16 +350,24 @@ def cornersHeuristic(state, problem):
     admissible (as well as consistent).
     """
     corners = problem.corners # These are the corner coordinates
-    x, y, c1, c2, c3, c4 = state
+    px, py, c1, c2, c3, c4 = state
 
-    xy1 = (x, y)
-    values = []
-
+    temp_list = []
     for i in range(0, len(corners), 1):
-        if not state[i+2]:
-            xy2 = corners[i]
-            values.append(mazeDistance(xy1, xy2, problem.startingGameState))
-    if len(values) == 0: return 0
+        if not state[i + 2]:
+            temp_list.append(corners[i])
+    values = []
+    temp_list.append((px, py))
+
+    for i in range(0, len(temp_list)-1, 1):
+        x, y = temp_list[i]
+        for j in range(i + 1, len(temp_list), 1):
+            x2, y2 = temp_list[j]
+            if not (x, y) == (x2, y2):
+                val = mazeDistance((x, y), (x2, y2), problem.startingGameState)
+                values.append(abs(val))
+
+    if len(values) ==0: return 0
     return max(values)
 
 
@@ -384,13 +392,17 @@ class FoodSearchProblem:
         self.startingGameState = startingGameState
         self._expanded = 0 # DO NOT CHANGE
         self.heuristicInfo = {} # A dictionary for the heuristic to store information
-
-        foods = []
+        self.foods = []
         for x in range(0, startingGameState.getFood().width, 1):
             for y in range(0, startingGameState.getFood().height, 1):
                 if startingGameState.getFood()[x][y]:
-                    foods.append((x, y))
-        self.heuristicInfo['foods'] = foods
+                    self.foods.append((x, y))
+        for i in range(0, len(self.foods) - 1, 1):
+            x, y = self.foods[i]
+            for j in range(i + 1, len(self.foods), 1):
+                x2, y2 = self.foods[j]
+                val = mazeDistance((x, y), (x2, y2), startingGameState)
+                self.heuristicInfo[((x, y), (x2, y2))] = abs(val)
 
     def getStartState(self):
         return self.start
@@ -455,16 +467,32 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    xy1 = position
-    values = []
-    for x, y in problem.heuristicInfo['foods']:
-        if foodGrid[x][y]:
-            xy2 = (x, y)
-            val = mazeDistance(xy1, xy2, problem.startingGameState)
-            values.append(val)
-    if len(values) ==0: return 0
-    return max(values)
+    pacman_xy, foodGrid = state
+    farthest_foods = []
+    max_between_foods = 0
+    for path in problem.heuristicInfo:
+        fx1, fy1 = path[0]
+        fx2, fy2 = path[1]
+        if foodGrid[fx1][fy1] and foodGrid[fx2][fy2]:
+            if abs(problem.heuristicInfo[path]) > max_between_foods:
+                max_between_foods = problem.heuristicInfo[path]
+                farthest_foods.append(path)
+    
+    min_distance = float('inf')
+    if max_between_foods == 0:
+        for x, y in problem.foods:
+            if foodGrid[x][y]:
+                return abs(mazeDistance(pacman_xy, (x, y), problem.startingGameState))
+
+    for food_pair in farthest_foods:
+        min_distance_1 =  abs(mazeDistance(pacman_xy, food_pair[0], problem.startingGameState))
+        min_distance_2 =  abs(mazeDistance(pacman_xy, food_pair[1], problem.startingGameState))
+        if min(min_distance_1, min_distance_2) < min_distance:
+            min_distance = min(min_distance_1, min_distance_2)
+
+    if min_distance == float('inf'):
+        min_distance = 0
+    return max_between_foods + min_distance
 
 
 class ClosestDotSearchAgent(SearchAgent):
