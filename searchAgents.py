@@ -474,7 +474,7 @@ def foodHeuristic(state, problem):
         fx1, fy1 = path[0]
         fx2, fy2 = path[1]
         if foodGrid[fx1][fy1] and foodGrid[fx2][fy2]:
-            if abs(problem.heuristicInfo[path]) > max_between_foods:
+            if abs(problem.heuristicInfo[path]) >= max_between_foods:
                 max_between_foods = problem.heuristicInfo[path]
                 farthest_foods.append(path)
     
