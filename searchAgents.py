@@ -384,7 +384,13 @@ class FoodSearchProblem:
         self.startingGameState = startingGameState
         self._expanded = 0 # DO NOT CHANGE
         self.heuristicInfo = {} # A dictionary for the heuristic to store information
-        self.heuristicInfo['start'] = startingGameState.getFood().count()
+
+        foods = []
+        for x in range(0, startingGameState.getFood().width, 1):
+            for y in range(0, startingGameState.getFood().height, 1):
+                if startingGameState.getFood()[x][y]:
+                    foods.append((x, y))
+        self.heuristicInfo['foods'] = foods
 
     def getStartState(self):
         return self.start
@@ -452,12 +458,11 @@ def foodHeuristic(state, problem):
     position, foodGrid = state
     xy1 = position
     values = []
-    for x in range(0, foodGrid.width, 1):
-        for y in range(0, foodGrid.height, 1):
-            if foodGrid[x][y]:
-                xy2 = (x, y)
-                val = mazeDistance(xy1, xy2, problem.startingGameState)
-                values.append(val)
+    for x, y in problem.heuristicInfo['foods']:
+        if foodGrid[x][y]:
+            xy2 = (x, y)
+            val = mazeDistance(xy1, xy2, problem.startingGameState)
+            values.append(val)
     if len(values) ==0: return 0
     return max(values)
 
