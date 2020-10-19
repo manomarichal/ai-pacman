@@ -298,7 +298,7 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        return len(state[1]) == 0
+        return not 'T' in state[1]
 
     def getSuccessors(self, state):
         """
@@ -322,7 +322,7 @@ class CornersProblem(search.SearchProblem):
             "*** YOUR CODE HERE ***"
 
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            pacman_xy, corners = state
+            pacman_xy, corner_string = state
             dx, dy = Actions.directionToVector(action)
             next_xy = int(pacman_xy[0] + dx), int(pacman_xy[1] + dy)
             if not self.walls[next_xy[0]][next_xy[1]]:
@@ -331,7 +331,7 @@ class CornersProblem(search.SearchProblem):
                     if next_xy == self.corners[i]:
                         new_string += 'F'
                     else:
-                        new_string += 'T'
+                        new_string += corner_string[i]
                 successors.append(((next_xy, new_string), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
@@ -379,15 +379,12 @@ def cornersHeuristic(state, problem):
         for i in range(0, len(corners), 1):
             if corners[i] == 'T':
                 return abs(mazeDistance(pacman_xy, corner_positions[i], problem.startingGameState))
-
+        return 0
 
     min_distance_1 =  abs(mazeDistance(pacman_xy, corner_positions[farthest_corners[0]], problem.startingGameState))
     min_distance_2 =  abs(mazeDistance(pacman_xy, corner_positions[farthest_corners[1]], problem.startingGameState))
     if min(min_distance_1, min_distance_2) < min_distance:
         min_distance = min(min_distance_1, min_distance_2)
-
-    if min_distance == float('inf'):
-        min_distance = 0
 
     return max_between_corners + min_distance
 
@@ -506,7 +503,6 @@ def foodHeuristic(state, problem):
             if foodGrid[x][y]:
                 return abs(mazeDistance(pacman_xy, (x, y), problem.startingGameState))
         return 0
-
 
     min_distance_1 =  abs(mazeDistance(pacman_xy, farthest_foods[0], problem.startingGameState))
     min_distance_2 =  abs(mazeDistance(pacman_xy, farthest_foods[1], problem.startingGameState))
