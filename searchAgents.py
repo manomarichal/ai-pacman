@@ -269,7 +269,17 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+
         self.startingGameState = startingGameState
+        self.heuristicInfo = {} # A dictionary for the heuristic to store information
+
+        for i in range(0, len(self.corners) - 1, 1):
+            x, y = self.corners[i]
+            for j in range(i + 1, len(self.corners), 1):
+                x2, y2 = self.corners[j]
+                val = mazeDistance((x, y), (x2, y2), startingGameState)
+                self.heuristicInfo[(i, j)] = abs(val)
+
 
     def getStartState(self):
         """
@@ -277,14 +287,18 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        return self.startingPosition[0], self.startingPosition[1], False, False, False, False
+
+        corners = ''
+        for i in range(len(self.corners)):
+            corners += ('T')
+        return (self.startingPosition[0], self.startingPosition[1]), corners
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        return state[2] == state[3]== state[4] == state[5] == True
+        return len(state[1]) == 0
 
     def getSuccessors(self, state):
         """
@@ -308,19 +322,17 @@ class CornersProblem(search.SearchProblem):
             "*** YOUR CODE HERE ***"
 
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            x,y,c1, c2, c3, c4 = state
+            pacman_xy, corners = state
             dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
-            if not self.walls[nextx][nexty]:
-                if (nextx, nexty) == self.corners[0]:
-                    c1 = True
-                elif (nextx, nexty) == self.corners[1]:
-                    c2 = True
-                elif (nextx, nexty) == self.corners[2]:
-                    c3 = True
-                elif (nextx, nexty) == self.corners[3]:
-                    c4 = True
-                successors.append( ( (nextx, nexty, c1, c2, c3, c4), action, 1) )
+            next_xy = int(pacman_xy[0] + dx), int(pacman_xy[1] + dy)
+            if not self.walls[next_xy[0]][next_xy[1]]:
+                new_string = ''
+                for i in range(0, len(self.corners), 1):
+                    if next_xy == self.corners[i]:
+                        new_string += 'F'
+                    else:
+                        new_string += 'T'
+                successors.append(((next_xy, new_string), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -349,26 +361,35 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = problem.corners # These are the corner coordinates
-    px, py, c1, c2, c3, c4 = state
+    corner_positions = problem.corners
+    pacman_xy, corners = state
+    corners = list(corners)
+    farthest_corners = None
+    max_between_corners = 0
+    for path in problem.heuristicInfo:
+        corner_1 = path[0]
+        corner_2 = path[1]
+        if corners[corner_1] == 'T' and corners[corner_2] == 'T':
+            if abs(problem.heuristicInfo[path]) >= max_between_corners:
+                max_between_corners = problem.heuristicInfo[path]
+                farthest_corners = path
 
-    temp_list = []
-    for i in range(0, len(corners), 1):
-        if not state[i + 2]:
-            temp_list.append(corners[i])
-    values = []
-    temp_list.append((px, py))
+    min_distance = float('inf')
+    if max_between_corners == 0:
+        for i in range(0, len(corners), 1):
+            if corners[i] == 'T':
+                return abs(mazeDistance(pacman_xy, corner_positions[i], problem.startingGameState))
 
-    for i in range(0, len(temp_list)-1, 1):
-        x, y = temp_list[i]
-        for j in range(i + 1, len(temp_list), 1):
-            x2, y2 = temp_list[j]
-            if not (x, y) == (x2, y2):
-                val = mazeDistance((x, y), (x2, y2), problem.startingGameState)
-                values.append(abs(val))
 
-    if len(values) ==0: return 0
-    return max(values)
+    min_distance_1 =  abs(mazeDistance(pacman_xy, corner_positions[farthest_corners[0]], problem.startingGameState))
+    min_distance_2 =  abs(mazeDistance(pacman_xy, corner_positions[farthest_corners[1]], problem.startingGameState))
+    if min(min_distance_1, min_distance_2) < min_distance:
+        min_distance = min(min_distance_1, min_distance_2)
+
+    if min_distance == float('inf'):
+        min_distance = 0
+
+    return max_between_corners + min_distance
 
 
 class AStarCornersAgent(SearchAgent):
@@ -403,6 +424,7 @@ class FoodSearchProblem:
                 x2, y2 = self.foods[j]
                 val = mazeDistance((x, y), (x2, y2), startingGameState)
                 self.heuristicInfo[((x, y), (x2, y2))] = abs(val)
+
 
     def getStartState(self):
         return self.start
@@ -468,7 +490,7 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount']
     """
     pacman_xy, foodGrid = state
-    farthest_foods = []
+    farthest_foods = None
     max_between_foods = 0
     for path in problem.heuristicInfo:
         fx1, fy1 = path[0]
@@ -476,22 +498,21 @@ def foodHeuristic(state, problem):
         if foodGrid[fx1][fy1] and foodGrid[fx2][fy2]:
             if abs(problem.heuristicInfo[path]) >= max_between_foods:
                 max_between_foods = problem.heuristicInfo[path]
-                farthest_foods.append(path)
-    
+                farthest_foods = path
+
     min_distance = float('inf')
     if max_between_foods == 0:
         for x, y in problem.foods:
             if foodGrid[x][y]:
                 return abs(mazeDistance(pacman_xy, (x, y), problem.startingGameState))
+        return 0
 
-    for food_pair in farthest_foods:
-        min_distance_1 =  abs(mazeDistance(pacman_xy, food_pair[0], problem.startingGameState))
-        min_distance_2 =  abs(mazeDistance(pacman_xy, food_pair[1], problem.startingGameState))
-        if min(min_distance_1, min_distance_2) < min_distance:
-            min_distance = min(min_distance_1, min_distance_2)
 
-    if min_distance == float('inf'):
-        min_distance = 0
+    min_distance_1 =  abs(mazeDistance(pacman_xy, farthest_foods[0], problem.startingGameState))
+    min_distance_2 =  abs(mazeDistance(pacman_xy, farthest_foods[1], problem.startingGameState))
+    if min(min_distance_1, min_distance_2) < min_distance:
+        min_distance = min(min_distance_1, min_distance_2)
+
     return max_between_foods + min_distance
 
 
